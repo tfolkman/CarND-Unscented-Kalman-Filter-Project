@@ -227,6 +227,27 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
 
   You'll also need to calculate the lidar NIS.
   */
+    
+    ekf_.H_ = MatrixXd(2, 4);
+    ekf_.H_ << 1, 0, 0, 0,
+    0, 1, 0, 0;
+    ekf_.R_ = R_laser_;
+    ekf_.Update(measurement_pack.raw_measurements_);
+    
+    VectorXd z_pred = H_ * x_;
+    VectorXd y = z - z_pred;
+    MatrixXd Ht = H_.transpose();
+    MatrixXd S = H_ * P_ * Ht + R_;
+    MatrixXd Si = S.inverse();
+    MatrixXd PHt = P_ * Ht;
+    MatrixXd K = PHt * Si;
+    
+    //new estimate
+    x_ = x_ + (K * y);
+    long x_size = x_.size();
+    MatrixXd I = MatrixXd::Identity(x_size, x_size);
+    P_ = (I - K * H_) * P_;
+
 }
 
 /**
